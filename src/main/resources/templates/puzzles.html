@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Puzzles</title>
+</head>
+<body>
+<section>
+    <div th:each="puzzle : ${puzzles}">
+        <a th:href="@{'/puzzle/'+${puzzle.puzzleId}}"
+           th:text="${puzzle.puzzleId}"></a>
+    </div>
+    <form action="#" th:action="@{/puzzles(page=${page}-1)}">
+        <input type="submit" value="PREV" />
+        <input hidden="hidden" type="number" name="page" th:value="${page}-1">
+    </form>
+
+    <form action="#" th:action="@{/puzzles}">
+        <input type="submit" value="NEXT" />
+        <input hidden="hidden" type="number" name="page" th:value="${page}+1">
+    </form>
+</section>
+</body>
+</html>

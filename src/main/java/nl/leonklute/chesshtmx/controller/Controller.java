@@ -2,14 +2,16 @@ package nl.leonklute.chesshtmx.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.leonklute.chesshtmx.chess.*;
+import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
+import nl.leonklute.chesshtmx.service.PuzzleService;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static nl.leonklute.chesshtmx.chess.Piece.toImgCode;
 
@@ -17,11 +19,12 @@ import static nl.leonklute.chesshtmx.chess.Piece.toImgCode;
 @org.springframework.stereotype.Controller
 public class Controller {
 
+    private final PuzzleService puzzleService;
     private Game game;
-
     private Location from;
 
-    public Controller() {
+    public Controller(PuzzleService puzzleService) {
+        this.puzzleService = puzzleService;
         game = new Game();
         game.put(new Location(1, 1), new Rook(Color.WHITE));
         game.put(new Location(2, 1), new Knight(Color.WHITE));
@@ -50,13 +53,7 @@ public class Controller {
 
     @GetMapping("/")
     public String index(Model model) {
-        Map<String, String> valueMap = game.getPosition().entrySet().stream()
-                .collect(Collectors.toUnmodifiableMap(e -> e.getKey().asAlgebraic(), e -> toImgCode(e.getValue())));
-        model.addAttribute("state", valueMap);
-        model.addAttribute("files", new int[]{8, 7, 6, 5, 4, 3, 2, 1});
-        model.addAttribute("ranks", new String[]{"a", "b", "c", "d", "e", "f", "g", "h"});
-        model.addAttribute("rankIndices", new int[]{0, 1, 2, 3, 4, 5, 6, 7});
-        log.info("{}", model.asMap());
+        mapState(model);
         return "index";
     }
 
@@ -72,6 +69,11 @@ public class Controller {
         log.info("fen: {} {} {} {} {} {} {} {}", row1, row2, row3, row4, row5, row6, row7, row8etc);
         FenParser fenParser = new FenParser();
         game = fenParser.parse(String.join("/", row1, row2, row3, row4, row5, row6, row7, row8etc));
+        mapState(model);
+        return "index";
+    }
+
+    private void mapState(Model model) {
         Map<String, String> valueMap = game.getPosition().entrySet().stream()
                 .collect(Collectors.toUnmodifiableMap(e -> e.getKey().asAlgebraic(), e -> toImgCode(e.getValue())));
         model.addAttribute("state", valueMap);
@@ -79,7 +81,6 @@ public class Controller {
         model.addAttribute("ranks", new String[]{"a", "b", "c", "d", "e", "f", "g", "h"});
         model.addAttribute("rankIndices", new int[]{0, 1, 2, 3, 4, 5, 6, 7});
         log.info("{}", model.asMap());
-        return "index";
     }
 
     @PostMapping("/start-move")
@@ -109,6 +110,29 @@ public class Controller {
         log.info("model: {}", model);
         from = null;
         return "move";
+    }
+
+    @GetMapping("/puzzle/{puzzleId}")
+    public String getPuzzle(@PathVariable String puzzleId, Model model) {
+        Optional<PuzzleEntity> puzzleOption = puzzleService.getPuzzle(puzzleId);
+        log.info("puzzle: {}", puzzleOption);
+        if (puzzleOption.isEmpty())
+            throw new RuntimeException();
+        var puzzle = puzzleOption.get();
+        var parser = new FenParser();
+        game = parser.parse(puzzle.FEN);
+        mapState(model);
+        return "index";
+    }
+
+    @GetMapping("/puzzles")
+    public String getPuzzles(@RequestParam String page, Model model){
+        var puzzles = puzzleService.getPaginatedPuzzles(Integer.parseInt(page));
+        log.info("puzzles: {}", puzzles);
+        model.addAttribute("puzzles", puzzles);
+        model.addAttribute("page", page);
+        log.info("model: {}", model.asMap());
+        return "puzzles";
     }
 
 }

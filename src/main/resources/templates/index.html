@@ -16,8 +16,8 @@
 <body>
 <main class="container">
     <section
-            hx-ext="ws"
-            ws-connect="/ws"
+            data-hx-ext="ws"
+            data-ws-connect="/ws"
             class="board"
             id="board">
         <div th:each="rankIndex: ${rankIndices}"
