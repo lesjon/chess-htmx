@@ -1,0 +1,13 @@
+<div th:each="entry : ${state}"
+     th:if="${state.containsKey(entry.key)}"
+     th:id="${entry.key}"
+     class="piece"
+     data-hx-swap-oob="outerHTML"
+>
+    <img th:src="@{${'/assets/img/' + entry.value + '.png'}}"
+         th:if="${entry.value}"
+         draggable="false"
+         loading="eager"
+         width="100%"
+         alt="square"/>
+</div>

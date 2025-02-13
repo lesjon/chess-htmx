@@ -1,0 +1,36 @@
+.board {
+    user-select: none;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+}
+
+.piece {
+    position: relative;
+}
+
+.square-dark {
+    background-color: #b58863;
+    aspect-ratio: 1;
+}
+
+.square-light {
+    background-color: #f0d9b5;
+    aspect-ratio: 1;
+}
+
+.piece-image {
+    position: relative;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+.square-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: .5;
+    z-index: 0;
+}
