@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fragments</title>
+</head>
+<body>
+<img th:fragment="piece(imgCode)"
+     th:src="@{${'/assets/img/' + imgCode + '.png'}}"
+     draggable="false"
+     loading="eager"
+     width="100%"
+     alt="square"/>
+</body>
+</html>

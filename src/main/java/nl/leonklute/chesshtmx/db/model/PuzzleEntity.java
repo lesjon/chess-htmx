@@ -9,10 +9,11 @@ public class PuzzleEntity {
     public String puzzleId;
 
     public String FEN;
-    public Integer Rating;
-    public Integer RatingDeviation;
-    public Integer Popularity;
-    public Integer NbPlays;
+    public String moves;
+    public Integer rating;
+    public Integer ratingDeviation;
+    public Integer popularity;
+    public Integer nbPlays;
     public String themes;
     public String gameUrl;
     public String openingTags;

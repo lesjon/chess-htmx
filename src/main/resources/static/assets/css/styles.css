@@ -2,9 +2,8 @@
     user-select: none;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-    grid-column-gap: 0px;
-    grid-row-gap: 0px;
+    grid-column-gap: 0;
+    grid-row-gap: 0;
 }
 
 .piece {
@@ -21,12 +20,23 @@
     aspect-ratio: 1;
 }
 
+.square-dark-move {
+    background-color: #ffff99;
+    aspect-ratio: 1;
+}
+
+.square-light-move {
+    background-color: #ffffcc;
+    aspect-ratio: 1;
+}
+
 .piece-image {
     position: relative;
     top: 0;
     left: 0;
     z-index: 1;
 }
+
 .square-image {
     position: absolute;
     top: 0;

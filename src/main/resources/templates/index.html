@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>
-        Chess
-        HTMX</title>
+    <title>Chess HTMX</title>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet"
@@ -14,37 +13,61 @@
     <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
 </head>
 <body>
+<nav style="background-color: var(--pico-primary-background)"
+     th:fragment="nav">
+    <ul style="margin-left: 1em">
+        <li>
+            <strong>Stalemate</strong>
+        </li>
+    </ul>
+    <ul style="margin-right: 1em">
+        <li>
+            <a th:href="@{/puzzle/list}"
+               class="secondary">Puzzles</a>
+        </li>
+        <li>
+            <details
+                    class="dropdown">
+                <summary sec:authentication="name" style="min-width: 20ch">
+                    Account
+                </summary>
+                <ul dir="rtl">
+                    <li>
+                        <a th:href="@{user/__${#authentication.name}__}">Profile</a>
+                    </li>
+                    <li>
+                        <a href="#">Settings</a>
+                    </li>
+                    <li>
+                        <a href="#">Security</a>
+                    </li>
+                    <li>
+                        <form sec:authorize="isAuthenticated()"
+                              th:action="@{/logout}"
+                              method="post">
+                            <input type="submit"
+                                   th:value="Logout"/>
+                        </form>
+                        <form sec:authorize="!isAuthenticated()"
+                              th:action="@{/login}">
+                            <input type="submit"
+                                   th:value="Login"/>
+                        </form>
+                    </li>
+                </ul>
+            </details>
+        </li>
+    </ul>
+</nav>
 <main class="container">
-    <section
-            data-hx-ext="ws"
-            data-ws-connect="/ws"
-            class="board"
-            id="board">
-        <div th:each="rankIndex: ${rankIndices}"
-             th:with="rank=${ranks[rankIndex]}">
-            <div th:each="file: ${files}"
-                 th:with="key=${rank + file}">
-                <div th:id="@{${key} + '-square'}"
-                     th:class="'square square-'+${file % 2 == rankIndex % 2 ? 'light' : 'dark'}">
-                    <div th:id="${key}"
-                         class="piece">
-                        <img th:src="@{${'/assets/img/' + state.get(key) + '.png'}}"
-                             th:if="${state.containsKey(key)}"
-                             draggable="false"
-                             loading="eager"
-                             width="100%"
-                             alt="square"/>
-                    </div>
-                    <div th:attr="hx-post=@{/start-move},hx-trigger=@{'mousedown from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
-                         data-hx-swap="none">
-                    </div>
-                    <div th:attr="hx-post=@{/end-move},hx-trigger=@{'mouseup from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
-                         data-hx-swap="none">
-                    </div>
-                </div>
-            </div>
-        </div>
+    <section>
+        <form th:action="@{puzzle}"
+              method="get">
+            <input type="submit"
+                   value="Go to next puzzle">
+        </form>
     </section>
+
 </main>
 </body>
 </html>

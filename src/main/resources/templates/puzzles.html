@@ -4,22 +4,47 @@
     <meta charset="UTF-8">
     <title>
         Puzzles</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          th:href="@{/assets/css/styles.css}">
 </head>
 <body>
-<section>
-    <div th:each="puzzle : ${puzzles}">
-        <a th:href="@{'/puzzle/'+${puzzle.puzzleId}}"
-           th:text="${puzzle.puzzleId}"></a>
+<main class="container">
+    <div th:each="i : ${#numbers.sequence(0,4)}"
+         class="grid">
+        <article
+                th:each="j : ${#numbers.sequence(0,3)}"
+                th:with="puzzle=${puzzles[i*4+j]}">
+            <header>
+                <a th:href="@{'/puzzle/'+${puzzle.puzzleId}}"
+                   th:text="${puzzle.puzzleId}"></a>
+            </header>
+            <a th:href="@{https://lichess.org/training/__${puzzle.puzzleId}__}">lichess</a>
+            <footer th:text="${'Rating: ' + puzzle.rating}"></footer>
+        </article>
     </div>
-    <form action="#" th:action="@{/puzzles(page=${page}-1)}">
-        <input type="submit" value="PREV" />
-        <input hidden="hidden" type="number" name="page" th:value="${page}-1">
-    </form>
 
-    <form action="#" th:action="@{/puzzles}">
-        <input type="submit" value="NEXT" />
-        <input hidden="hidden" type="number" name="page" th:value="${page}+1">
-    </form>
-</section>
+    <div class="grid">
+        <form action="#"
+              th:action="@{/puzzle/list}">
+            <input type="submit"
+                   value="PREV"/>
+            <input hidden="hidden"
+                   type="number"
+                   name="page"
+                   th:value="${page}-1">
+        </form>
+        <form action="#"
+              th:action="@{/puzzle/list}">
+            <input type="submit"
+                   value="NEXT"/>
+            <input hidden="hidden"
+                   type="number"
+                   name="page"
+                   th:value="${page}+1">
+        </form>
+    </div>
+</main>
 </body>
 </html>
