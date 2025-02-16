@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
 
@@ -34,10 +35,25 @@ public class PuzzleController {
         if(null == puzzle) {
             return "redirect:/puzzle/list";
         }
-        mapState(model, puzzle.game(), puzzle.orientation());
+        model.addAllAttributes(mapState(puzzle.game(), puzzle.orientation()));
+        model.addAttribute("isUserMove", false);
         return "puzzle";
     }
 
+
+    @PostMapping("/next-move")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void nextMove(@RequestParam(defaultValue = "false") String failed, Principal principal) throws IOException {
+        log.debug("nextMove");
+        puzzleService.nextMove(principal, false);
+    }
+
+    @PostMapping("/show-move")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void nextMove(Principal principal) throws IOException {
+        log.debug("showMove");
+        puzzleService.nextMove(principal, false);
+    }
 
     @PostMapping("/start-move")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -50,16 +66,13 @@ public class PuzzleController {
     public String endMove(@RequestParam String location, Principal principal, Model model) {
         log.debug("endMove: {}", location);
         Puzzle puzzle = puzzleService.getCurrentPuzzle(principal);
-        model.addAttribute("rank", Character.toString(location.charAt(0)));
-        model.addAttribute("rankIndex", location.codePointAt(0) - 'a');
-        model.addAttribute("file", location.codePointAt(1) - '0');
-        Map<String, String> valueMap = new HashMap<>();
         Location to = Location.from(location);
         if (to.equals(from)) {
             from = null;
-            return null;
+            return "empty";
         }
         Move userMove = new Move(from, to);
+        Map<String, String> valueMap = new HashMap<>();
         if(puzzle.isNextMove(userMove)){
             puzzle.game().move(userMove);
             valueMap.put(from.asAlgebraic(), null);
@@ -68,8 +81,13 @@ public class PuzzleController {
             model.addAttribute("wrongMove", userMove.asAlgebraic());
         }
         model.addAttribute("state", valueMap);
+        model.addAttribute("rank", Character.toString(location.charAt(0)));
+        model.addAttribute("rankIndex", location.codePointAt(0) - 'a');
+        model.addAttribute("file", location.codePointAt(1) - '0');
+        model.addAttribute("isUserMove", true);
         from = null;
-        return "move";
+        model.addAllAttributes(mapState(puzzle.game(), puzzle.orientation()));
+        return "board";
     }
 
     @GetMapping("/{puzzleId}")
@@ -84,9 +102,7 @@ public class PuzzleController {
         game.move(Move.from(puzzleEntity.moves.split(" ")[0]));
         List<Move> moves = Arrays.stream(puzzleEntity.moves.split(" ")).map(Move::from).toList();
         var puzzle = new Puzzle(game, game.getActive(), moves);
-
         puzzleService.setCurrentPuzzle(principal, puzzle);
-        mapState(model, game, puzzle.orientation());
         return "redirect:/puzzle";
     }
 
@@ -96,7 +112,7 @@ public class PuzzleController {
         log.info("puzzles: {}", puzzles);
         model.addAttribute("puzzles", puzzles);
         model.addAttribute("page", page);
-        log.info("model: {}", model.asMap());
+        log.debug("model: {}", model.asMap());
         return "puzzles";
     }
 

@@ -2,39 +2,43 @@ package nl.leonklute.chesshtmx;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.security.Principal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler implements WebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GameWebSocketHandler.class);
 
-    private final List<WebSocketSession> webSocketSessions = new CopyOnWriteArrayList<>();
+    private final Map<Principal, WebSocketSession> webSocketSessions = new ConcurrentHashMap<>();
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        webSocketSessions.add(session);
+    public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
+        webSocketSessions.put(session.getPrincipal(), session);
+        log.info("ws connection: {}", session);
+        log.debug("webSocketSessions: {}", webSocketSessions);
     }
 
     @Override
-    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+    public void handleMessage(@NonNull WebSocketSession session, @NonNull WebSocketMessage<?> message) throws Exception {
         log.error("Got message: '{}' from session: {}", message, session);
     }
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+    public void handleTransportError(@NonNull WebSocketSession session, @NonNull Throwable exception) throws Exception {
         log.error("Got transportError on: '{}'", session, exception);
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
+    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus closeStatus) throws Exception {
         log.info("Session closed with status: {}", closeStatus);
-        webSocketSessions.remove(session);
+        webSocketSessions.remove(session.getPrincipal(), session);
     }
 
     @Override
@@ -42,13 +46,13 @@ public class GameWebSocketHandler implements WebSocketHandler {
         return false;
     }
 
-    public void broadcast(TextMessage message){
-        webSocketSessions.stream().filter(WebSocketSession::isOpen).forEach(s -> {
-            try {
-                s.sendMessage(message);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+    public  void send(Principal principal, TextMessage message) throws IOException {
+        var session = webSocketSessions.get(principal);
+        if (session != null && session.isOpen()){
+            log.info("Send message: {}", message);
+            synchronized (session) {
+                session.sendMessage(message);
             }
-        });
+        }
     }
 }

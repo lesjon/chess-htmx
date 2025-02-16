@@ -13,21 +13,34 @@
 .square-dark {
     background-color: #b58863;
     aspect-ratio: 1;
+    position: relative;
 }
 
 .square-light {
     background-color: #f0d9b5;
     aspect-ratio: 1;
+    position: relative;
 }
 
 .square-dark-move {
     background-color: #ffff99;
     aspect-ratio: 1;
+    position: relative;
 }
 
 .square-light-move {
     background-color: #ffffcc;
     aspect-ratio: 1;
+    position: relative;
+}
+
+.square-annotation {
+    z-index: 1;
+    top: 0;
+    right: 0;
+    width: 30%;
+    opacity: 50;
+    position: absolute;
 }
 
 .piece-image {

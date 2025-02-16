@@ -4,15 +4,10 @@ import nl.leonklute.chesshtmx.db.model.UserEntity;
 import nl.leonklute.chesshtmx.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.security.Principal;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/login")
+@RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
@@ -22,8 +17,15 @@ public class UserController {
     }
 
     @GetMapping
-    public Principal getUser(Model model) {
-        return (Principal) model.getAttribute("user");
+    public String getUser(Model model) {
+        model.addAttribute("rating", 100);
+        return "user";
+    }
+
+    @GetMapping("/{username}")
+    public String getUser(@PathVariable String username, Model model) {
+        model.addAttribute("rating", 100);
+        return "user";
     }
 
     @PostMapping

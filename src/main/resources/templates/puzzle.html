@@ -13,38 +13,17 @@
 <body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot; ' + _csrf.token + '&quot;}'}">
 <nav th:replace="~{index :: nav}"></nav>
 <main class="container">
-    <section>
-        <h1>Puzzle</h1>
-        <hr>
-        <div data-hx-ext="ws"
-             data-ws-connect="/ws"
-             class="board"
-             id="board">
-            <div th:each="rankIndex: ${rankIndices}"
-                 th:with="rank=${ranks[rankIndex]}">
-                <div th:each="file: ${files}"
-                     th:with="key=${rank + file}">
-                    <div th:id="@{${key} + '-square'}"
-                         th:class="'square-'+${file % 2 == rankIndex % 2 ? 'light' : 'dark'} +${lastMove != null && lastMove.contains(key) ? '-move' : ''}">
-                        <div th:id="${key}"
-                             class="piece">
-                            <img th:src="@{${'/assets/img/' + state.get(key) + '.png'}}"
-                                 th:if="${state.containsKey(key)}"
-                                 draggable="false"
-                                 loading="eager"
-                                 width="100%"
-                                 alt="square"/>
-                        </div>
-                        <div th:attr="hx-post=@{/puzzle/start-move},hx-trigger=@{'mousedown from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
-                             data-hx-swap="none">
-                        </div>
-                        <div th:attr="hx-post=@{/puzzle/end-move},hx-trigger=@{'mouseup from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
-                             data-hx-swap="none">
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <section data-hx-ext="ws" data-ws-connect="/ws">
+        <div class="grid">
+            <h1>Puzzle</h1>
+            <button th:attr="hx-post=@{/puzzle/next-move}"
+                    data-hx-swap="none">
+                Show move
+            </button>
         </div>
+        <hr>
+        <div id="next-move-trigger"></div>
+        <div th:replace="~{board}"></div>
     </section>
 </main>
 </body>

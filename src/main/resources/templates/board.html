@@ -1,0 +1,55 @@
+<div class="board"
+     id="board"
+     data-hx-swap-oob="true">
+    <div th:each="rankIndex: ${rankIndices}"
+         th:with="rank=${ranks[rankIndex]}">
+        <div th:each="file: ${files}"
+             th:with="key=${rank + file}">
+            <div th:id="@{${key} + '-square'}"
+                 th:class="'square-'+${file % 2 == rankIndex % 2 ? 'light' : 'dark'} +${lastMove != null && lastMove.contains(key) ? '-move' : ''}">
+                <div th:id="${key}"
+                     class="piece">
+                    <img th:src="@{${'assets/img/' + state.get(key) + '.png'}}"
+                         th:if="${state.containsKey(key)}"
+                         draggable="false"
+                         loading="eager"
+                         width="100%"
+                         alt="square"
+                         style="position: relative"/>
+                    <img th:if="${wrongMove != null && wrongMove[1].equals(key)}"
+                         th:id="${wrongMove[1]}"
+                         th:src="@{'assets/img/Red_X.png'}"
+                         draggable="false"
+                         loading="eager"
+                         width="100%"
+                         alt="square"
+                         class="square-annotation"
+                    />
+                </div>
+            </div>
+            <div th:attr="hx-post=@{puzzle/start-move},hx-trigger=@{'mousedown[0==event.button] from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+                 data-hx-swap="none">
+            </div>
+            <div th:attr="hx-post=@{puzzle/end-move},hx-trigger=@{'mouseup[0==event.button] from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+                 data-hx-swap="none">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="show-move-trigger"
+     th:attr="data-hx-post=@{puzzle/show-move}"
+     data-hx-trigger="load once delay:15s"
+     data-hx-target="#show-move-trigger"
+>
+</div>
+<div th:if="${isUserMove}"
+     data-hx-swap-oob="beforebegin"
+     id="next-move-trigger"
+     data-hx-target="#board"
+>
+    <div
+            th:attr="data-hx-post=@{puzzle/next-move}"
+            data-hx-trigger="load once delay:100ms"
+    ></div>
+</div>
+
