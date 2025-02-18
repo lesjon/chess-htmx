@@ -6,12 +6,13 @@
         <div th:each="file: ${files}"
              th:with="key=${rank + file}">
             <div th:id="@{${key} + '-square'}"
-                 th:class="'square-'+${file % 2 == rankIndex % 2 ? 'light' : 'dark'} +${lastMove != null && lastMove.contains(key) ? '-move' : ''}">
+                 th:class="'square-'+${file % 2 == rankIndex % 2 ? 'light' : 'dark'} +${lastMove != null && lastMove.contains(key) ? '-move' : ''}"
+                 th:attr="ondragover='event.preventDefault()'">
                 <div th:id="${key}"
                      class="piece">
                     <img th:src="@{${'assets/img/' + state.get(key) + '.png'}}"
                          th:if="${state.containsKey(key)}"
-                         draggable="false"
+                         draggable="true"
                          loading="eager"
                          width="100%"
                          alt="square"
@@ -27,10 +28,10 @@
                     />
                 </div>
             </div>
-            <div th:attr="hx-post=@{puzzle/start-move},hx-trigger=@{'mousedown[0==event.button] from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+            <div th:attr="hx-post=@{puzzle/start-move},hx-trigger=@{'dragstart from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
                  data-hx-swap="none">
             </div>
-            <div th:attr="hx-post=@{puzzle/end-move},hx-trigger=@{'mouseup[0==event.button] from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+            <div th:attr="hx-post=@{puzzle/end-move},hx-trigger=@{'drop from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
                  data-hx-swap="none">
             </div>
         </div>
