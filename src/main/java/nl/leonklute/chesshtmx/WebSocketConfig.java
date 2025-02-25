@@ -32,4 +32,5 @@ public class WebSocketConfig implements WebSocketConfigurer {
         messages.simpDestMatchers("/users/**").hasRole("USER");
         return messages.build();
     }
+
 }

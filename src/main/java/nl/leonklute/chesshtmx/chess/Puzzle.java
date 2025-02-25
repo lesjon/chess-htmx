@@ -8,7 +8,8 @@ import java.util.List;
 public record Puzzle(
         Game game,
         Color orientation,
-        List<Move> moves) {
+        List<Move> moves,
+        String id) {
 
     public boolean isNextMove(Move move) {
         log.debug("isNextMove({})", move);

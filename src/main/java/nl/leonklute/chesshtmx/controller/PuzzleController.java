@@ -37,6 +37,7 @@ public class PuzzleController {
         }
         model.addAllAttributes(mapState(puzzle.game(), puzzle.orientation()));
         model.addAttribute("isUserMove", false);
+        model.addAttribute("puzzle", puzzle);
         return "puzzle";
     }
 
@@ -98,10 +99,10 @@ public class PuzzleController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         var puzzleEntity = puzzleOption.get();
         var parser = new FenParser();
-        var game = parser.parse(puzzleEntity.FEN);
-        game.move(Move.from(puzzleEntity.moves.split(" ")[0]));
-        List<Move> moves = Arrays.stream(puzzleEntity.moves.split(" ")).map(Move::from).toList();
-        var puzzle = new Puzzle(game, game.getActive(), moves);
+        var game = parser.parse(puzzleEntity.getFEN());
+        game.move(Move.from(puzzleEntity.getMoves().split(" ")[0]));
+        List<Move> moves = Arrays.stream(puzzleEntity.getMoves().split(" ")).map(Move::from).toList();
+        var puzzle = new Puzzle(game, game.getActive(), moves, puzzleEntity.getPuzzleId());
         puzzleService.setCurrentPuzzle(principal, puzzle);
         return "redirect:/puzzle";
     }

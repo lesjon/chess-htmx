@@ -6,12 +6,13 @@ import nl.leonklute.chesshtmx.chess.Color;
 import nl.leonklute.chesshtmx.chess.Game;
 import nl.leonklute.chesshtmx.chess.Move;
 import nl.leonklute.chesshtmx.chess.Puzzle;
+import nl.leonklute.chesshtmx.db.PuzzleMetadataRepository;
 import nl.leonklute.chesshtmx.db.PuzzleRepository;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
+import nl.leonklute.chesshtmx.db.model.PuzzleMetadataEntity;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
 import org.springframework.web.socket.TextMessage;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -32,6 +33,7 @@ import static nl.leonklute.chesshtmx.chess.Piece.toImgCode;
 public class PuzzleService {
 
     private final PuzzleRepository puzzleRepository;
+    private final PuzzleMetadataRepository puzzleMetadataRepository;
 
     private final Map<Principal, Puzzle> puzzleCache;
 
@@ -40,9 +42,10 @@ public class PuzzleService {
     private final TemplateEngine templateEngine;
 
     public PuzzleService(PuzzleRepository puzzleRepository,
-                         GameWebSocketHandler gameWebSocketHandler,
+                         PuzzleMetadataRepository puzzleMetadataRepository, GameWebSocketHandler gameWebSocketHandler,
                          TemplateEngine templateEngine) {
         this.puzzleRepository = puzzleRepository;
+        this.puzzleMetadataRepository = puzzleMetadataRepository;
         this.gameWebSocketHandler = gameWebSocketHandler;
         this.templateEngine = templateEngine;
         this.puzzleCache = new HashMap<>();
@@ -110,5 +113,16 @@ public class PuzzleService {
         context.setVariables(mapState(puzzle.game(), puzzle.orientation()));
         String html = templateEngine.process("board", context);
         gameWebSocketHandler.send(principal, new TextMessage(html));
+    }
+
+    public void disable(String puzzleId) {
+        log.warn("disabling: {}", puzzleId);
+        Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
+        log.info("puzzleEntityOpion {}", puzzleEntityOption );
+        if(puzzleEntityOption.isEmpty()) return;
+        PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
+        puzzleMetadata.setActive(false);
+        var saved = puzzleMetadataRepository.save(puzzleMetadata);
+        log.info("saved: {}", saved);
     }
 }

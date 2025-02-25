@@ -1,21 +1,27 @@
 package nl.leonklute.chesshtmx.db.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity(name = "puzzles")
 public class PuzzleEntity {
     @Id
-    public String puzzleId;
+    private String puzzleId;
 
-    public String FEN;
-    public String moves;
-    public Integer rating;
-    public Integer ratingDeviation;
-    public Integer popularity;
-    public Integer nbPlays;
-    public String themes;
-    public String gameUrl;
-    public String openingTags;
+    private String FEN;
+    private String moves;
+    private Integer rating;
+    private Integer ratingDeviation;
+    private Integer popularity;
+    private Integer nbPlays;
+    private String themes;
+    private String gameUrl;
+    private String openingTags;
+
+    @OneToOne(mappedBy = "puzzle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PuzzleMetadataEntity puzzleMetadataEntity;
 
 }

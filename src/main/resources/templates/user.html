@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title sec:authentication="name">User</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet"
           th:href="@{/assets/css/styles.css}">
 </head>
-<body>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot; ' + _csrf.token + '&quot;}'}">
 <nav th:replace="~{index :: nav}"></nav>
 <main class="container">
     <section>
@@ -17,6 +18,37 @@
         <p th:text="${'Rating: ' + rating}">
 
         </p>
+        <div>
+            <h3>
+                Search Users
+                <span class="htmx-indicator">
+                    Searching...
+                </span>
+            </h3>
+            <input type="search"
+                   name="search"
+                   placeholder="Begin Typing To Search Users..."
+                   th:attr="data-hx-post=@{/user/search}"
+                   data-hx-trigger="input changed delay:500ms, keyup[key=='Enter'], load"
+                   data-hx-target="#search-results"
+                   data-hx-indicator=".htmx-indicator">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Rating</th>
+                    <th>Roles</th>
+                </tr>
+                </thead>
+                <tbody id="search-results" data-hx-swap="outerHTML">
+                <tr th:each="user : ${userSearchResults}" th:fragment="search-results">
+                    <td th:text="${user.username()}"></td>
+                    <td th:text="${user.rating()}"></td>
+                    <td th:text="${user.roles()}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 </main>
 </body>
