@@ -10,6 +10,7 @@ import nl.leonklute.chesshtmx.db.PuzzleMetadataRepository;
 import nl.leonklute.chesshtmx.db.PuzzleRepository;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
 import nl.leonklute.chesshtmx.db.model.PuzzleMetadataEntity;
+import nl.leonklute.chesshtmx.service.model.PuzzleListing;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -77,14 +78,17 @@ public class PuzzleService {
         return puzzleRepository.findById(puzzleId);
     }
 
-    public List<PuzzleEntity> getPaginatedPuzzles(int page) {
+    public List<PuzzleListing> getPaginatedPuzzles(int page, String theme) {
         PageRequest request;
         if (page < 0) {
             request = PageRequest.of(Math.abs(page) - 1, PAGE_SIZE, Sort.Direction.DESC, "rating");
         } else {
             request = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, "rating");
         }
-        return puzzleRepository.findAll(request).getContent();
+        if (theme.equals("*")){
+            return puzzleRepository.findAllBy(request).toList();
+        }
+        return puzzleRepository.findAllByThemesContaining(request, theme).toList();
     }
 
     public Puzzle getCurrentPuzzle(Principal user) {
@@ -118,7 +122,7 @@ public class PuzzleService {
     public void disable(String puzzleId) {
         log.warn("disabling: {}", puzzleId);
         Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
-        log.info("puzzleEntityOpion {}", puzzleEntityOption );
+        log.info("puzzleEntityOption {}", puzzleEntityOption );
         if(puzzleEntityOption.isEmpty()) return;
         PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
         puzzleMetadata.setActive(false);

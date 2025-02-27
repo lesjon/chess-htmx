@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import nl.leonklute.chesshtmx.chess.*;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
 import nl.leonklute.chesshtmx.service.PuzzleService;
+import nl.leonklute.chesshtmx.service.model.PuzzleListing;
+import nl.leonklute.chesshtmx.service.model.Themes;
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -108,11 +110,13 @@ public class PuzzleController {
     }
 
     @GetMapping("/list")
-    public String getPuzzles(@RequestParam(defaultValue = "0") String page, Model model) {
-        var puzzles = puzzleService.getPaginatedPuzzles(Integer.parseInt(page));
-        log.info("puzzles: {}", puzzles);
+    public String getPuzzles(@RequestParam(defaultValue = "0") String page, @RequestParam(defaultValue = "*") String theme, Model model) {
+        List<PuzzleListing> puzzles = puzzleService.getPaginatedPuzzles(Integer.parseInt(page), theme);
+        log.debug("puzzles: {}", puzzles);
         model.addAttribute("puzzles", puzzles);
         model.addAttribute("page", page);
+        model.addAttribute("themes", Arrays.stream(Themes.values()).map(Themes::getName).toArray());
+        model.addAttribute("filteredTheme", theme);
         log.debug("model: {}", model.asMap());
         return "puzzles";
     }

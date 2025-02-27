@@ -21,7 +21,7 @@ public class PuzzleEntity {
     private String gameUrl;
     private String openingTags;
 
-    @OneToOne(mappedBy = "puzzle", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "puzzle", orphanRemoval = true, fetch = FetchType.LAZY)
     private PuzzleMetadataEntity puzzleMetadataEntity;
 
 }
