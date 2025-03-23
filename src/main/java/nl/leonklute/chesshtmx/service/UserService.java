@@ -3,12 +3,14 @@ package nl.leonklute.chesshtmx.service;
 import nl.leonklute.chesshtmx.db.UserRepository;
 import nl.leonklute.chesshtmx.db.model.UserEntity;
 import nl.leonklute.chesshtmx.service.model.UserSearchResult;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,8 +40,16 @@ public class UserService implements UserDetailsService {
         return repository.findById(id);
     }
 
+    public Optional<UserEntity> getUserByPrincipal(Principal principal) {
+        return repository.findByUsername(principal.getName());
+    }
+
     public List<UserSearchResult> findUsers(String search) {
-        return repository.findByUsernameLike(search).stream()
+        return repository.findAllByUsernameContains(PageRequest.of(0, 100), search).stream()
                 .map(UserSearchResult::from).toList();
+    }
+
+    public void update(UserEntity user) {
+        repository.save(user);
     }
 }

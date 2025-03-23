@@ -21,9 +21,19 @@
             data-ws-connect="/ws">
         <div class="grid">
             <h1>Puzzle</h1>
+            <form th:action="@{/puzzle/next}"
+                  method="get"
+                  id="next-puzzle"
+                  hidden="hidden">
+            </form>
             <button th:attr="hx-post=@{/puzzle/next-move}"
+                    th:if="${!puzzle.isFinished()}"
                     data-hx-swap="none">
                 Show move
+            </button>
+            <button form="next-puzzle"
+                    th:if="${puzzle.isFinished()}">
+                Next puzzle
             </button>
         </div>
         <hr>
@@ -31,35 +41,44 @@
         <div th:replace="~{board}"></div>
     </section>
     <section
+            th:fragment="puzzle-review"
             th:if="${puzzle.isFinished()}">
         <header>
             Puzzle review
         </header>
         <div class="grid">
+            <input hidden="hidden"
+                   name="puzzle-id"
+                   th:value="${puzzle.id()}">
             <input sec:authorize="hasRole('ADMIN')"
                    type="button"
                    value="Disable"
                    data-hx-swap="none"
-                   th:attr="data-hx-post=@{puzzle-metadata/disable},hx-vals=${'{&quot;puzzleId&quot;: &quot;' + puzzle.id() + '&quot;}'}">
+                   data-hx-include="[name='puzzle-id']"
+                   th:attr="data-hx-post=@{puzzle-metadata/disable}">
             <fieldset
                     sec:authorize="hasRole('ADMIN')"
                     role="group">
-                <input name="additional_moves"
+                <input name="additional-moves"
                        type="text"
                        placeholder="Moves: e2e4 e7e5">
-                <input disabled type="submit"
-                       value="add">
+                <button th:attr="hx-post=@{puzzle-metadata/additional-moves}"
+                        data-hx-include="[name='additional-moves'],[name='puzzle-id']">
+                    Add
+                </button>
             </fieldset>
-            <input disabled type="button"
+            <input type="button"
                    value="Like"
                    class="pico-background-green-500"
                    data-hx-swap="none"
-                   th:attr="data-hx-post=@{puzzle-metadata/like}">
-            <input disabled type="button"
+                   th:attr="data-hx-post=@{puzzle-metadata/like}"
+                   data-hx-include="[name='puzzle-id']">
+            <input type="button"
                    value="Dislike"
                    class="pico-background-red-500"
                    data-hx-swap="none"
-                   th:attr="data-hx-post=@{puzzle-metadata/dislike}">
+                   th:attr="data-hx-post=@{puzzle-metadata/dislike}"
+                   data-hx-include="[name='puzzle-id']">
         </div>
     </section>
 </main>

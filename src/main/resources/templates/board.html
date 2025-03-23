@@ -37,13 +37,14 @@
         </div>
     </div>
 </div>
-<div id="show-move-trigger"
+<div th:if="${userToMove}"
+     id="show-move-trigger"
      th:attr="data-hx-post=@{puzzle/show-move}"
-     data-hx-trigger="load once delay:15s"
+     data-hx-trigger="load once delay:5s"
      data-hx-target="#show-move-trigger"
 >
 </div>
-<div th:if="${isUserMove}"
+<div th:if="${!userToMove}"
      data-hx-swap-oob="beforebegin"
      id="next-move-trigger"
      data-hx-target="#board"

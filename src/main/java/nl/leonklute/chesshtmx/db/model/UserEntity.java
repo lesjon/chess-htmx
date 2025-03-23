@@ -54,4 +54,7 @@ public class UserEntity implements Principal, UserDetails {
         }
     }
 
+    @OneToOne(mappedBy = "user")
+    PuzzleCollectionEntity puzzleCollectionEntity;
+
 }

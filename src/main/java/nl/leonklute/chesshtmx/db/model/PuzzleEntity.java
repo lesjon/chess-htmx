@@ -3,10 +3,12 @@ package nl.leonklute.chesshtmx.db.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Immutable;
 
 @Getter
 @Setter
 @Entity(name = "puzzles")
+@Immutable
 public class PuzzleEntity {
     @Id
     private String puzzleId;

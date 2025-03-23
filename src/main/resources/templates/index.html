@@ -25,7 +25,7 @@
             <a th:href="@{/}" class="secondary">Home</a>
         </li>
         <li>
-            <a th:href="@{/puzzle/list}"
+            <a th:href="@{/puzzle}"
                class="secondary">Puzzles</a>
         </li>
         <li>
@@ -36,7 +36,7 @@
                 </summary>
                 <ul dir="rtl">
                     <li>
-                        <a th:href="@{user/__${#authentication.name}__}">Profile</a>
+                        <a th:href="@{/user/__${#authentication.name}__}">Profile</a>
                     </li>
                     <li>
                         <a href="#">Settings</a>

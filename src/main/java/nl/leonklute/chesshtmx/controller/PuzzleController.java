@@ -1,5 +1,6 @@
 package nl.leonklute.chesshtmx.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonklute.chesshtmx.chess.*;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
@@ -7,6 +8,7 @@ import nl.leonklute.chesshtmx.service.PuzzleService;
 import nl.leonklute.chesshtmx.service.model.PuzzleListing;
 import nl.leonklute.chesshtmx.service.model.Themes;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,28 +36,33 @@ public class PuzzleController {
     public String index(Principal principal, Model model) {
         log.info("index principal: {}", principal);
         var puzzle = puzzleService.getCurrentPuzzle(principal);
-        if(null == puzzle) {
-            return "redirect:/puzzle/list";
+        if (null == puzzle) {
+            return "redirect:/puzzle/next";
         }
         model.addAllAttributes(mapState(puzzle.game(), puzzle.orientation()));
-        model.addAttribute("isUserMove", false);
+        model.addAttribute("userToMove", true);
         model.addAttribute("puzzle", puzzle);
         return "puzzle";
     }
 
+    @GetMapping("/next")
+    public String nextPuzzle(Principal principal) {
+        var puzzle = puzzleService.getNextPuzzle(principal);
+        return "redirect:/puzzle/" + puzzle.getPuzzleId();
+    }
 
     @PostMapping("/next-move")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void nextMove(@RequestParam(defaultValue = "false") String failed, Principal principal) throws IOException {
+    public void nextMove(Principal principal) throws IOException {
         log.debug("nextMove");
-        puzzleService.nextMove(principal, false);
+        puzzleService.nextMove(principal);
     }
 
     @PostMapping("/show-move")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void nextMove(Principal principal) throws IOException {
+    public void showMove(Principal principal) throws IOException {
         log.debug("showMove");
-        puzzleService.nextMove(principal, false);
+        puzzleService.nextMove(principal);
     }
 
     @PostMapping("/start-move")
@@ -66,7 +73,7 @@ public class PuzzleController {
     }
 
     @PostMapping("/end-move")
-    public String endMove(@RequestParam String location, Principal principal, Model model) {
+    public String endMove(@RequestParam String location, @Nullable @RequestParam String promotion, Principal principal, Model model, HttpServletResponse response) {
         log.debug("endMove: {}", location);
         Puzzle puzzle = puzzleService.getCurrentPuzzle(principal);
         Location to = Location.from(location);
@@ -74,27 +81,33 @@ public class PuzzleController {
             from = null;
             return "empty";
         }
-        Move userMove = new Move(from, to);
+        var optionalPiece = Optional.ofNullable(promotion)
+                .map(s -> Piece.of(s.charAt(0), puzzle.orientation()));
+        Move userMove = new Move(from, to, optionalPiece);
         Map<String, String> valueMap = new HashMap<>();
-        if(puzzle.isNextMove(userMove)){
+        if (puzzle.isNextMove(userMove)) {
             puzzle.game().move(userMove);
+            if(puzzle.isFinished()){
+                puzzleService.puzzleFinished(principal);
+                response.addHeader("HX-Refresh", "true");
+            }
             valueMap.put(from.asAlgebraic(), null);
             valueMap.put(to.asAlgebraic(), toImgCode(puzzle.game().getPosition().get(to)));
-        }else {
+        } else {
             model.addAttribute("wrongMove", userMove.asAlgebraic());
         }
         model.addAttribute("state", valueMap);
         model.addAttribute("rank", Character.toString(location.charAt(0)));
         model.addAttribute("rankIndex", location.codePointAt(0) - 'a');
         model.addAttribute("file", location.codePointAt(1) - '0');
-        model.addAttribute("isUserMove", true);
+        model.addAttribute("userToMove", false);
         from = null;
         model.addAllAttributes(mapState(puzzle.game(), puzzle.orientation()));
         return "board";
     }
 
     @GetMapping("/{puzzleId}")
-    public String getPuzzle(@PathVariable String puzzleId,Principal principal, Model model) {
+    public String getPuzzle(@PathVariable String puzzleId, Principal principal, Model model) {
         Optional<PuzzleEntity> puzzleOption = puzzleService.getPuzzle(puzzleId);
         log.debug("starting puzzle: {}", puzzleOption);
         if (puzzleOption.isEmpty())
@@ -104,7 +117,7 @@ public class PuzzleController {
         var game = parser.parse(puzzleEntity.getFEN());
         game.move(Move.from(puzzleEntity.getMoves().split(" ")[0]));
         List<Move> moves = Arrays.stream(puzzleEntity.getMoves().split(" ")).map(Move::from).toList();
-        var puzzle = new Puzzle(game, game.getActive(), moves, puzzleEntity.getPuzzleId());
+        var puzzle = new Puzzle(game, game.getActive(), moves, new ArrayList<>(), puzzleEntity.getPuzzleId());
         puzzleService.setCurrentPuzzle(principal, puzzle);
         return "redirect:/puzzle";
     }

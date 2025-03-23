@@ -10,10 +10,13 @@ import nl.leonklute.chesshtmx.db.PuzzleMetadataRepository;
 import nl.leonklute.chesshtmx.db.PuzzleRepository;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
 import nl.leonklute.chesshtmx.db.model.PuzzleMetadataEntity;
+import nl.leonklute.chesshtmx.db.model.UserEntity;
 import nl.leonklute.chesshtmx.service.model.PuzzleListing;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.socket.TextMessage;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -41,14 +44,16 @@ public class PuzzleService {
     private final GameWebSocketHandler gameWebSocketHandler;
 
     private final TemplateEngine templateEngine;
+    private final UserService userService;
 
     public PuzzleService(PuzzleRepository puzzleRepository,
                          PuzzleMetadataRepository puzzleMetadataRepository, GameWebSocketHandler gameWebSocketHandler,
-                         TemplateEngine templateEngine) {
+                         TemplateEngine templateEngine, UserService userService) {
         this.puzzleRepository = puzzleRepository;
         this.puzzleMetadataRepository = puzzleMetadataRepository;
         this.gameWebSocketHandler = gameWebSocketHandler;
         this.templateEngine = templateEngine;
+        this.userService = userService;
         this.puzzleCache = new HashMap<>();
     }
 
@@ -85,7 +90,7 @@ public class PuzzleService {
         } else {
             request = PageRequest.of(page, PAGE_SIZE, Sort.Direction.ASC, "rating");
         }
-        if (theme.equals("*")){
+        if (theme.equals("*")) {
             return puzzleRepository.findAllBy(request).toList();
         }
         return puzzleRepository.findAllByThemesContaining(request, theme).toList();
@@ -99,7 +104,7 @@ public class PuzzleService {
         puzzleCache.put(user, puzzle);
     }
 
-    public void nextMove(Principal principal, boolean isUserMove) throws IOException {
+    public void nextMove(Principal principal) throws IOException {
         Puzzle puzzle = puzzleCache.get(principal);
         if (puzzle.isFinished()) {
             return;
@@ -111,8 +116,9 @@ public class PuzzleService {
         pieceMap.put(move.from().asAlgebraic(), null);
         pieceMap.put(move.to().asAlgebraic(), toImgCode(puzzle.game().getPosition().get(move.to())));
         context.setVariable("state", pieceMap);
-        context.setVariable("isUserMove", isUserMove);
-        if(isUserMove)
+        var userToMove = puzzle.game().getActive().equals(puzzle.orientation());
+        context.setVariable("userToMove", userToMove);
+        if (!userToMove)
             context.setVariable("wrongMove", move.asAlgebraic());
         context.setVariables(mapState(puzzle.game(), puzzle.orientation()));
         String html = templateEngine.process("board", context);
@@ -122,10 +128,68 @@ public class PuzzleService {
     public void disable(String puzzleId) {
         log.warn("disabling: {}", puzzleId);
         Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
-        log.info("puzzleEntityOption {}", puzzleEntityOption );
-        if(puzzleEntityOption.isEmpty()) return;
+        log.info("puzzleEntityOption {}", puzzleEntityOption);
+        if (puzzleEntityOption.isEmpty())
+            return;
         PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
         puzzleMetadata.setActive(false);
+        var saved = puzzleMetadataRepository.save(puzzleMetadata);
+        log.info("saved: {}", saved);
+    }
+
+    public void addAdditionalMoves(String puzzleId, String additionalMoves) {
+        log.warn("adding moves '{}' to: {}", additionalMoves, puzzleId);
+        Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
+        log.info("puzzleEntityOption {}", puzzleEntityOption);
+        if (puzzleEntityOption.isEmpty())
+            return;
+        PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
+        puzzleMetadata.setAdditionalMoves(additionalMoves);
+        var saved = puzzleMetadataRepository.save(puzzleMetadata);
+        log.info("saved: {}", saved);
+    }
+
+    public PuzzleListing getNextPuzzle(Principal principal) {
+        Optional<UserEntity> userOption = userService.getUserByPrincipal(principal);
+        if (userOption.isEmpty())
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "unkown user requested next puzzle");
+        List<PuzzleListing> puzzles = puzzleRepository.findFirst10ByRating(userOption.get().getRating(), Sort.by("rating"));
+        return puzzles.getFirst();
+    }
+
+    public void puzzleFinished(Principal principal) {
+        UserEntity user = userService.getUserByPrincipal(principal).get();
+        var puzzle = puzzleCache.get(principal);
+        if (puzzle.attemptedMoves().isEmpty()) {
+            user.setRating(user.getRating() + 1);
+        } else {
+            user.setRating(user.getRating() - 1);
+        }
+        userService.update(user);
+    }
+
+    public void like(String puzzleId, Principal principal) {
+        log.warn("adding like from '{}' to: {}", principal.getName(), puzzleId);
+        Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
+        log.info("puzzleEntityOption {}", puzzleEntityOption);
+        if (puzzleEntityOption.isEmpty())
+            return;
+        PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
+        boolean success = puzzleMetadata.addLike(principal.getName());
+        log.info("success is {}", success);
+        var saved = puzzleMetadataRepository.save(puzzleMetadata);
+        log.info("saved: {}", saved);
+    }
+
+    public void dislike(String puzzleId, Principal principal) {
+        log.warn("adding dislike from '{}' to: {}", principal.getName(), puzzleId);
+        Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
+        log.info("puzzleEntityOption {}", puzzleEntityOption);
+        if (puzzleEntityOption.isEmpty())
+            return;
+        PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
+        boolean success = puzzleMetadata.addDislike(principal.getName());
+        log.info("success is {}", success);
         var saved = puzzleMetadataRepository.save(puzzleMetadata);
         log.info("saved: {}", saved);
     }
