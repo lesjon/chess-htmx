@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          th:href="@{assets/css/styles.css}">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+<main class="container">
+    <section>
+        <header th:text="'Sign up'">
+        </header>
+        <div th:if="${param.error}">
+            Invalid username and password.
+        </div>
+        <form th:action="@{/user}"
+              method="post">
+            <div>
+                <label>
+                    User Name :<input type="text" name="username"/>
+                </label>
+            </div>
+            <div>
+                <label>
+                    Password:<input type="password" name="password"/>
+                </label>
+            </div>
+            <div>
+                <input type="submit" value="Sign up"/>
+            </div>
+        </form>
+        <form th:action="@{/login}" method="get">
+            <input type="submit" value="Log in instead" class="contrast">
+        </form>
+    </section>
+</main>
+</body>
+</html>

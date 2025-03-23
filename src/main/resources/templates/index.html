@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess HTMX</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          th:href="@{/assets/css/styles.css}">
+
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+</head>
+<body>
+<nav style="background-color: var(--pico-primary-background)"
+     th:fragment="nav">
+    <ul style="margin-left: 1em">
+        <li>
+            <strong>Stalemate</strong>
+        </li>
+    </ul>
+    <ul style="margin-right: 1em">
+        <li>
+            <a th:href="@{/}" class="secondary">Home</a>
+        </li>
+        <li>
+            <a th:href="@{/puzzle}"
+               class="secondary">Puzzles</a>
+        </li>
+        <li>
+            <details
+                    class="dropdown">
+                <summary sec:authentication="name" style="min-width: 20ch">
+                    Account
+                </summary>
+                <ul dir="rtl">
+                    <li>
+                        <a th:href="@{/user/__${#authentication.name}__}">Profile</a>
+                    </li>
+                    <li>
+                        <a href="#">Settings</a>
+                    </li>
+                    <li>
+                        <a href="#">Security</a>
+                    </li>
+                    <li>
+                        <form sec:authorize="isAuthenticated()"
+                              th:action="@{/logout}"
+                              method="post">
+                            <input type="submit"
+                                   th:value="Logout"/>
+                        </form>
+                        <form sec:authorize="!isAuthenticated()"
+                              th:action="@{/login}">
+                            <input type="submit"
+                                   th:value="Login"/>
+                        </form>
+                    </li>
+                </ul>
+            </details>
+        </li>
+    </ul>
+</nav>
+<main class="container">
+    <section>
+        <form th:action="@{puzzle}"
+              method="get">
+            <input type="submit"
+                   value="Go to next puzzle">
+        </form>
+    </section>
+
+</main>
+</body>
+</html>

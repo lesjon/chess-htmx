@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        Puzzles</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          th:href="@{/assets/css/styles.css}">
+</head>
+<body>
+<nav th:replace="~{index :: nav}"></nav>
+<main class="container">
+
+    <div th:each="i : ${#numbers.sequence(0,4)}"
+         class="grid">
+        <article
+                th:each="j : ${#numbers.sequence(0,3)}"
+                th:with="puzzle=${puzzles[i*4+j]}">
+            <header>
+                <a th:href="@{'/puzzle/'+${puzzle.puzzleId}}"
+                   th:text="${puzzle.puzzleId}"></a>
+            </header>
+            <a th:href="@{https://lichess.org/training/__${puzzle.puzzleId}__}">lichess</a>
+            <footer th:text="${'Rating: ' + puzzle.rating}"></footer>
+        </article>
+    </div>
+
+    <div class="grid">
+        <form action="#"
+              th:action="@{/puzzle/list}">
+            <input type="submit"
+                   value="PREV"/>
+            <input hidden="hidden"
+                   type="number"
+                   name="page"
+                   th:value="${page}-1">
+            <input hidden="hidden"
+                   type="text"
+                   name="theme"
+                   th:value="${filteredTheme}">
+        </form>
+        <form action="#"
+              th:action="@{/puzzle/list}">
+            <input hidden="hidden"
+                   type="number"
+                   name="page"
+                   th:value="${page}">
+            <fieldset role="group">
+                <select class="dropdown"
+                        name="theme">
+                    <option value="*">
+                        none
+                    </option>
+                    <option th:each="theme : ${themes}"
+                            th:value="${theme}"
+                            th:text="${theme}"
+                            th:selected="${theme == filteredTheme}"
+                    >
+                    </option>
+                </select>
+                <input type="submit"
+                       value="Filter"
+                       name="filter">
+            </fieldset>
+        </form>
+        <form action="#"
+              th:action="@{/puzzle/list}">
+            <input type="submit"
+                   value="NEXT"/>
+            <input hidden="hidden"
+                   type="number"
+                   name="page"
+                   th:value="${page}+1">
+            <input hidden="hidden"
+                   type="text"
+                   name="theme"
+                   th:value="${filteredTheme}">
+        </form>
+    </div>
+</main>
+</body>
+</html>

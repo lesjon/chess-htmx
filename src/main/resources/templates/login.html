@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          th:href="@{assets/css/styles.css}">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+<main class="container">
+    <section>
+        <h1>
+            Login
+        </h1>
+        <div th:if="${param.error}">
+            Invalid username and/or password.
+        </div>
+        <div th:if="${param.logout}">
+            You have been logged out.
+        </div>
+        <form th:action="@{/login}" method="post">
+            <div>
+                <label>
+                    User Name :<input type="text" name="username"/>
+                </label>
+            </div>
+            <div>
+                <label>
+                    Password:<input type="password" name="password"/>
+                </label>
+            </div>
+            <div>
+                <input type="submit" value="Sign In"/>
+            </div>
+        </form>
+        <form th:action="@{login/signup}" method="get">
+            <input type="submit" value="Sign up instead" class="contrast">
+        </form>
+    </section>
+</main>
+</body>
+</html>

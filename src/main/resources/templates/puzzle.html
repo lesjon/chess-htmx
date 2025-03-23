@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess HTMX</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css">
+    <link rel="stylesheet"
+          th:href="@{/assets/css/styles.css}">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+</head>
+<body th:attr="hx-headers=${'{&quot;' + _csrf.headerName + '&quot;:&quot; ' + _csrf.token + '&quot;}'}">
+<nav th:replace="~{index :: nav}"></nav>
+<main class="container">
+    <section
+            data-hx-ext="ws"
+            data-ws-connect="/ws">
+        <div class="grid">
+            <h1>Puzzle</h1>
+            <form th:action="@{/puzzle/next}"
+                  method="get"
+                  id="next-puzzle"
+                  hidden="hidden">
+            </form>
+            <button th:attr="hx-post=@{/puzzle/next-move}"
+                    th:if="${!puzzle.isFinished()}"
+                    data-hx-swap="none">
+                Show move
+            </button>
+            <button form="next-puzzle"
+                    th:if="${puzzle.isFinished()}">
+                Next puzzle
+            </button>
+        </div>
+        <hr>
+        <div id="next-move-trigger"></div>
+        <div th:replace="~{board}"></div>
+    </section>
+    <section
+            th:fragment="puzzle-review"
+            th:if="${puzzle.isFinished()}">
+        <header>
+            Puzzle review
+        </header>
+        <div class="grid">
+            <input hidden="hidden"
+                   name="puzzle-id"
+                   th:value="${puzzle.id()}">
+            <input sec:authorize="hasRole('ADMIN')"
+                   type="button"
+                   value="Disable"
+                   data-hx-swap="none"
+                   data-hx-include="[name='puzzle-id']"
+                   th:attr="data-hx-post=@{puzzle-metadata/disable}">
+            <fieldset
+                    sec:authorize="hasRole('ADMIN')"
+                    role="group">
+                <input name="additional-moves"
+                       type="text"
+                       placeholder="Moves: e2e4 e7e5">
+                <button th:attr="hx-post=@{puzzle-metadata/additional-moves}"
+                        data-hx-include="[name='additional-moves'],[name='puzzle-id']">
+                    Add
+                </button>
+            </fieldset>
+            <input type="button"
+                   value="Like"
+                   class="pico-background-green-500"
+                   data-hx-swap="none"
+                   th:attr="data-hx-post=@{puzzle-metadata/like}"
+                   data-hx-include="[name='puzzle-id']">
+            <input type="button"
+                   value="Dislike"
+                   class="pico-background-red-500"
+                   data-hx-swap="none"
+                   th:attr="data-hx-post=@{puzzle-metadata/dislike}"
+                   data-hx-include="[name='puzzle-id']">
+        </div>
+    </section>
+</main>
+</body>
+</html>
