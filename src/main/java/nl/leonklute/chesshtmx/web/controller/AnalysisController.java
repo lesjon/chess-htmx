@@ -1,4 +1,4 @@
-package nl.leonklute.chesshtmx.controller;
+package nl.leonklute.chesshtmx.web.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import nl.leonklute.chesshtmx.chess.*;

@@ -1,6 +1,7 @@
-package nl.leonklute.chesshtmx.controller;
+package nl.leonklute.chesshtmx.web.controller;
 
 import nl.leonklute.chesshtmx.service.PuzzleService;
+import nl.leonklute.chesshtmx.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,9 +16,11 @@ import java.security.Principal;
 public class PuzzleMetadataController {
 
     private final PuzzleService puzzleService;
+    private final UserService userService;
 
-    public PuzzleMetadataController(PuzzleService puzzleService) {
+    public PuzzleMetadataController(PuzzleService puzzleService, UserService userService) {
         this.puzzleService = puzzleService;
+        this.userService = userService;
     }
 
     @PostMapping("/disable")
@@ -35,13 +38,15 @@ public class PuzzleMetadataController {
     @PostMapping("/like")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void like(Principal principal, @RequestParam("puzzle-id") String puzzleId){
-        puzzleService.like(puzzleId, principal);
+        long id = userService.getUserIdByPrincipal(principal);
+        puzzleService.like(puzzleId, id);
     }
 
     @PostMapping("/dislike")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void dislike(Principal principal, @RequestParam("puzzle-id") String puzzleId){
-        puzzleService.dislike(puzzleId, principal);
+        long id = userService.getUserIdByPrincipal(principal);
+        puzzleService.dislike(puzzleId, id);
     }
 
 }

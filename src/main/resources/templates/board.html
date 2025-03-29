@@ -28,10 +28,10 @@
                     />
                 </div>
             </div>
-            <div th:attr="hx-post=@{puzzle/start-move},hx-trigger=@{'dragstart from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+            <div th:attr="hx-post=@{puzzle/start-move},hx-trigger=@{'dragstart from:div#'+${key}+'-square, dragstart from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
                  data-hx-swap="none">
             </div>
-            <div th:attr="hx-post=@{puzzle/end-move},hx-trigger=@{'drop from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
+            <div th:attr="hx-post=@{puzzle/end-move},hx-trigger=@{'drop from:div#'+${key}+'-square, touchend from:div#'+${key}+'-square'},hx-vals='js:{location: \'' + ${key} + '\'}'"
                  data-hx-swap="none">
             </div>
         </div>

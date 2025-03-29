@@ -1,12 +1,14 @@
-package nl.leonklute.chesshtmx.controller;
+package nl.leonklute.chesshtmx.web.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import nl.leonklute.chesshtmx.chess.*;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
+import nl.leonklute.chesshtmx.db.model.UserEntity;
 import nl.leonklute.chesshtmx.service.PuzzleService;
+import nl.leonklute.chesshtmx.service.UserService;
 import nl.leonklute.chesshtmx.service.model.PuzzleListing;
-import nl.leonklute.chesshtmx.service.model.Themes;
+import nl.leonklute.chesshtmx.puzzle.Themes;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 import org.springframework.ui.Model;
@@ -26,16 +28,18 @@ import static nl.leonklute.chesshtmx.service.PuzzleService.mapState;
 public class PuzzleController {
 
     private final PuzzleService puzzleService;
+    private final UserService userService;
     private Location from;
 
-    public PuzzleController(PuzzleService puzzleService) {
+    public PuzzleController(PuzzleService puzzleService, UserService userService) {
         this.puzzleService = puzzleService;
+        this.userService = userService;
     }
 
     @GetMapping("")
     public String index(Principal principal, Model model) {
         log.info("index principal: {}", principal);
-        var puzzle = puzzleService.getCurrentPuzzle(principal);
+        var puzzle = puzzleService.getCurrentPuzzle(userService.getUserIdByPrincipal(principal));
         if (null == puzzle) {
             return "redirect:/puzzle/next";
         }
@@ -47,7 +51,7 @@ public class PuzzleController {
 
     @GetMapping("/next")
     public String nextPuzzle(Principal principal) {
-        var puzzle = puzzleService.getNextPuzzle(principal);
+        var puzzle = puzzleService.getNextPuzzle(userService.getUserIdByPrincipal(principal));
         return "redirect:/puzzle/" + puzzle.getPuzzleId();
     }
 
@@ -55,14 +59,14 @@ public class PuzzleController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void nextMove(Principal principal) throws IOException {
         log.debug("nextMove");
-        puzzleService.nextMove(principal);
+        puzzleService.nextMove(userService.getUserIdByPrincipal(principal));
     }
 
     @PostMapping("/show-move")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void showMove(Principal principal) throws IOException {
         log.debug("showMove");
-        puzzleService.nextMove(principal);
+        puzzleService.nextMove(userService.getUserIdByPrincipal(principal));
     }
 
     @PostMapping("/start-move")
@@ -75,7 +79,7 @@ public class PuzzleController {
     @PostMapping("/end-move")
     public String endMove(@RequestParam String location, @Nullable @RequestParam String promotion, Principal principal, Model model, HttpServletResponse response) {
         log.debug("endMove: {}", location);
-        Puzzle puzzle = puzzleService.getCurrentPuzzle(principal);
+        Puzzle puzzle = puzzleService.getCurrentPuzzle(userService.getUserIdByPrincipal(principal));
         Location to = Location.from(location);
         if (to.equals(from)) {
             from = null;
@@ -88,7 +92,12 @@ public class PuzzleController {
         if (puzzle.isNextMove(userMove)) {
             puzzle.game().move(userMove);
             if(puzzle.isFinished()){
-                puzzleService.puzzleFinished(principal);
+                var result = puzzleService.puzzleFinished(userService.getUserIdByPrincipal(principal));
+
+                UserEntity user = userService.getUserByPrincipal(principal);
+                user.setRating(user.getRating() + 1);
+                user.setRating(user.getRating() - 1);
+                userService.update(user);
                 response.addHeader("HX-Refresh", "true");
             }
             valueMap.put(from.asAlgebraic(), null);
@@ -118,7 +127,7 @@ public class PuzzleController {
         game.move(Move.from(puzzleEntity.getMoves().split(" ")[0]));
         List<Move> moves = Arrays.stream(puzzleEntity.getMoves().split(" ")).map(Move::from).toList();
         var puzzle = new Puzzle(game, game.getActive(), moves, new ArrayList<>(), puzzleEntity.getPuzzleId());
-        puzzleService.setCurrentPuzzle(principal, puzzle);
+        puzzleService.setCurrentPuzzle(userService.getUserIdByPrincipal(principal), puzzle);
         return "redirect:/puzzle";
     }
 

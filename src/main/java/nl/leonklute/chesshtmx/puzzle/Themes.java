@@ -1,4 +1,4 @@
-package nl.leonklute.chesshtmx.service.model;
+package nl.leonklute.chesshtmx.puzzle;
 
 public enum Themes {
     XRAYATTACK("xRayAttack"),

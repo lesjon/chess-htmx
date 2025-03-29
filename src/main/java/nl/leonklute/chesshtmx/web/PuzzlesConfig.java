@@ -1,4 +1,4 @@
-package nl.leonklute.chesshtmx;
+package nl.leonklute.chesshtmx.web;
 
 import org.springframework.context.annotation.Configuration;
 

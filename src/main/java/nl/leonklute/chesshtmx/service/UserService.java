@@ -4,6 +4,7 @@ import nl.leonklute.chesshtmx.db.UserRepository;
 import nl.leonklute.chesshtmx.db.model.UserEntity;
 import nl.leonklute.chesshtmx.service.model.UserSearchResult;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -40,8 +41,8 @@ public class UserService implements UserDetailsService {
         return repository.findById(id);
     }
 
-    public Optional<UserEntity> getUserByPrincipal(Principal principal) {
-        return repository.findByUsername(principal.getName());
+    public Optional<Principal> getPrincipal() {
+        return Optional.ofNullable((Principal) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     }
 
     public List<UserSearchResult> findUsers(String search) {
@@ -51,5 +52,14 @@ public class UserService implements UserDetailsService {
 
     public void update(UserEntity user) {
         repository.save(user);
+    }
+
+    public long getUserIdByPrincipal(Principal principal) {
+        UserEntity user = getUserByPrincipal(principal);
+        return user.getId();
+    }
+
+    public UserEntity getUserByPrincipal(Principal principal) {
+        return repository.findByUsername(principal.getName()).orElseThrow(() -> new RuntimeException("Logged in user not in database"));
     }
 }

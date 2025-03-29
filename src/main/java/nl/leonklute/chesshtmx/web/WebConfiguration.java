@@ -1,4 +1,4 @@
-package nl.leonklute.chesshtmx;
+package nl.leonklute.chesshtmx.web;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class GlobalConfiguration implements WebMvcConfigurer {
+public class WebConfiguration implements WebMvcConfigurer {
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {

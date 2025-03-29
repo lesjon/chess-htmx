@@ -1,4 +1,4 @@
-package nl.leonklute.chesshtmx.controller;
+package nl.leonklute.chesshtmx.web.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

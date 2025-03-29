@@ -82,8 +82,8 @@ CREATE TABLE public.puzzle_metadatas (
     active boolean DEFAULT true NOT NULL,
     book_id bigint,
     additional_moves character varying,
-    likes text[],
-    dislikes text[]
+    likes bigint[],
+    dislikes bigint[]
 );
 
 ALTER TABLE public.puzzle_metadatas OWNER TO postgres;

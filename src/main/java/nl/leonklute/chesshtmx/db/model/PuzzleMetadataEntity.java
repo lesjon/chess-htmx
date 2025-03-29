@@ -21,35 +21,35 @@ public class PuzzleMetadataEntity {
 
     private String additionalMoves;
 
-    private Set<String> likes;
-    private Set<String> dislikes;
+    private Set<Long> likes;
+    private Set<Long> dislikes;
 
     @OneToOne
     @JoinColumn(name = "puzzle_id", nullable = false)
     private PuzzleEntity puzzle;
 
-    public void removeDislikeIfExists(String username) {
+    public void removeDislikeIfExists(long userId) {
         if(dislikes == null){
             return;
         }
-        if(!dislikes.contains(username)){
+        if(!dislikes.contains(userId)){
            return;
         }
         dislikes = new HashSet<>(dislikes);
-        dislikes.remove(username);
+        dislikes.remove(userId);
     }
 
-    public boolean addLike(String username) {
-        removeDislikeIfExists(username);
+    public boolean addLike(long userId) {
+        removeDislikeIfExists(userId);
         if (likes == null){
-            this.likes = Set.of(username);
+            this.likes = Set.of(userId);
             return true;
         }
-        if (likes.contains(username)) {
+        if (likes.contains(userId)) {
             return false;
         }
-        Set<String> newLikes = new HashSet<>(this.likes);
-        newLikes.add(username);
+        Set<Long> newLikes = new HashSet<>(this.likes);
+        newLikes.add(userId);
         this.likes = newLikes;
         return true;
     }
@@ -66,28 +66,28 @@ public class PuzzleMetadataEntity {
                 '}';
     }
 
-    public void removeLikeIfExists(String username) {
+    public void removeLikeIfExists(long userId) {
         if(likes == null){
             return;
         }
-        if(!likes.contains(username)){
+        if(!likes.contains(userId)){
             return;
         }
         likes = new HashSet<>(likes);
-        likes.remove(username);
+        likes.remove(userId);
     }
 
-    public boolean addDislike(String username) {
-        removeLikeIfExists(username);
+    public boolean addDislike(long userId) {
+        removeLikeIfExists(userId);
         if (dislikes == null){
-            this.dislikes = Set.of(username);
+            this.dislikes = Set.of(userId);
             return true;
         }
-        if (dislikes.contains(username)) {
+        if (dislikes.contains(userId)) {
             return false;
         }
-        Set<String> newDislikes = new HashSet<>(this.dislikes);
-        newDislikes.add(username);
+        Set<Long> newDislikes = new HashSet<>(this.dislikes);
+        newDislikes.add(userId);
         this.dislikes = newDislikes;
         return true;
     }

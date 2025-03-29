@@ -1,7 +1,6 @@
 package nl.leonklute.chesshtmx.service;
 
 import lombok.extern.slf4j.Slf4j;
-import nl.leonklute.chesshtmx.GameWebSocketHandler;
 import nl.leonklute.chesshtmx.chess.Color;
 import nl.leonklute.chesshtmx.chess.Game;
 import nl.leonklute.chesshtmx.chess.Move;
@@ -11,7 +10,9 @@ import nl.leonklute.chesshtmx.db.PuzzleRepository;
 import nl.leonklute.chesshtmx.db.model.PuzzleEntity;
 import nl.leonklute.chesshtmx.db.model.PuzzleMetadataEntity;
 import nl.leonklute.chesshtmx.db.model.UserEntity;
+import nl.leonklute.chesshtmx.puzzle.PuzzleResult;
 import nl.leonklute.chesshtmx.service.model.PuzzleListing;
+import nl.leonklute.chesshtmx.web.GameWebSocketHandler;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -29,8 +30,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static nl.leonklute.chesshtmx.PuzzlesConfig.PAGE_SIZE;
 import static nl.leonklute.chesshtmx.chess.Piece.toImgCode;
+import static nl.leonklute.chesshtmx.web.PuzzlesConfig.PAGE_SIZE;
 
 @Slf4j
 @Service
@@ -39,7 +40,7 @@ public class PuzzleService {
     private final PuzzleRepository puzzleRepository;
     private final PuzzleMetadataRepository puzzleMetadataRepository;
 
-    private final Map<Principal, Puzzle> puzzleCache;
+    private final Map<Long, Puzzle> puzzleCache;
 
     private final GameWebSocketHandler gameWebSocketHandler;
 
@@ -96,16 +97,16 @@ public class PuzzleService {
         return puzzleRepository.findAllByThemesContaining(request, theme).toList();
     }
 
-    public Puzzle getCurrentPuzzle(Principal user) {
+    public Puzzle getCurrentPuzzle(long user) {
         return puzzleCache.get(user);
     }
 
-    public void setCurrentPuzzle(Principal user, Puzzle puzzle) {
+    public void setCurrentPuzzle(long user, Puzzle puzzle) {
         puzzleCache.put(user, puzzle);
     }
 
-    public void nextMove(Principal principal) throws IOException {
-        Puzzle puzzle = puzzleCache.get(principal);
+    public void nextMove(long userId) throws IOException {
+        Puzzle puzzle = puzzleCache.get(userId);
         if (puzzle.isFinished()) {
             return;
         }
@@ -122,7 +123,12 @@ public class PuzzleService {
             context.setVariable("wrongMove", move.asAlgebraic());
         context.setVariables(mapState(puzzle.game(), puzzle.orientation()));
         String html = templateEngine.process("board", context);
-        gameWebSocketHandler.send(principal, new TextMessage(html));
+
+        Optional<Principal> principalOption = userService.getPrincipal();
+
+        if (principalOption.isPresent()) {
+            gameWebSocketHandler.send(principalOption.get(), new TextMessage(html));
+        }
     }
 
     public void disable(String puzzleId) {
@@ -149,46 +155,44 @@ public class PuzzleService {
         log.info("saved: {}", saved);
     }
 
-    public PuzzleListing getNextPuzzle(Principal principal) {
-        Optional<UserEntity> userOption = userService.getUserByPrincipal(principal);
+    public PuzzleListing getNextPuzzle(long userId) {
+        Optional<UserEntity> userOption = userService.getUserById(userId);
         if (userOption.isEmpty())
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "unkown user requested next puzzle");
         List<PuzzleListing> puzzles = puzzleRepository.findFirst10ByRating(userOption.get().getRating(), Sort.by("rating"));
         return puzzles.getFirst();
     }
 
-    public void puzzleFinished(Principal principal) {
-        UserEntity user = userService.getUserByPrincipal(principal).get();
-        var puzzle = puzzleCache.get(principal);
+    public PuzzleResult puzzleFinished(long userId) {
+        var puzzle = puzzleCache.get(userId);
         if (puzzle.attemptedMoves().isEmpty()) {
-            user.setRating(user.getRating() + 1);
+            return PuzzleResult.SUCCES;
         } else {
-            user.setRating(user.getRating() - 1);
+            return PuzzleResult.FAILURE;
         }
-        userService.update(user);
     }
 
-    public void like(String puzzleId, Principal principal) {
-        log.warn("adding like from '{}' to: {}", principal.getName(), puzzleId);
+    public void like(String puzzleId, long userId) {
+        log.warn("adding like from '{}' to: {}", userService.getUserById(userId), puzzleId);
         Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
         log.info("puzzleEntityOption {}", puzzleEntityOption);
         if (puzzleEntityOption.isEmpty())
             return;
         PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
-        boolean success = puzzleMetadata.addLike(principal.getName());
+        boolean success = puzzleMetadata.addLike(userId);
         log.info("success is {}", success);
         var saved = puzzleMetadataRepository.save(puzzleMetadata);
         log.info("saved: {}", saved);
     }
 
-    public void dislike(String puzzleId, Principal principal) {
-        log.warn("adding dislike from '{}' to: {}", principal.getName(), puzzleId);
+    public void dislike(String puzzleId, long userId) {
+        log.warn("adding dislike from '{}' to: {}", userService.getUserById(userId), puzzleId);
         Optional<PuzzleEntity> puzzleEntityOption = puzzleRepository.findById(puzzleId);
         log.info("puzzleEntityOption {}", puzzleEntityOption);
         if (puzzleEntityOption.isEmpty())
             return;
         PuzzleMetadataEntity puzzleMetadata = puzzleEntityOption.get().getPuzzleMetadataEntity();
-        boolean success = puzzleMetadata.addDislike(principal.getName());
+        boolean success = puzzleMetadata.addDislike(userId);
         log.info("success is {}", success);
         var saved = puzzleMetadataRepository.save(puzzleMetadata);
         log.info("saved: {}", saved);
